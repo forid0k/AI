@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quotex Auto Signal Bot </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: #050816;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 10px;
+      color: #e5e7eb;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    .app {
+      border-radius: 20px;
+      padding: 12px;
+      background: radial-gradient(circle at top left, #111827, #020617);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .app-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .app-title span.icon {
+      font-size: 18px;
+    }
+
+    .app-subtitle {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .server-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .server-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.8);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+      }
+      70% {
+        transform: scale(1.3);
+        box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+      }
+    }
+
+    .chip {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(31, 41, 55, 0.9);
+      border: 1px solid rgba(75, 85, 99, 0.7);
+      color: #9ca3af;
+    }
+
+    .section {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 14px;
+      border: 1px solid rgba(55, 65, 81, 0.6);
+      background: radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(15,23,42,0.4));
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    select {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(75,85,99,0.8);
+      color: #e5e7eb;
+      font-size: 12px;
+      outline: none;
+    }
+
+    select:focus {
+      border-color: #22c55e;
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.4);
+    }
+
+    .tf-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .tf-btn {
+      flex: 1 1 25%;
+      min-width: 60px;
+      padding: 6px 0;
+      font-size: 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(75,85,99,0.9);
+      background: rgba(15,23,42,0.9);
+      color: #e5e7eb;
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+    }
+
+    .tf-btn.active {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border-color: rgba(34,197,94,0.8);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.45);
+      color: #022c22;
+      font-weight: 600;
+    }
+
+    .tf-btn.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .tf-btn:not(.disabled):active {
+      transform: scale(0.96);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .toggle-btn {
+      width: 90px;
+      height: 30px;
+      border-radius: 999px;
+      border: 1px solid rgba(75,85,99,0.8);
+      background: radial-gradient(circle at top, #111827, #020617);
+      position: relative;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 3px;
+      font-size: 11px;
+      color: #9ca3af;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .toggle-knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: #6b7280;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.7);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .toggle-btn.on {
+      background: linear-gradient(135deg, #22c55e, #15803d);
+      border-color: rgba(34,197,94,0.9);
+      color: #022c22;
+    }
+
+    .toggle-btn.on .toggle-knob {
+      transform: translateX(56px);
+      background: #f9fafb;
+    }
+
+    .toggle-labels {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 8px;
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .signal-card {
+      margin-top: 8px;
+      border-radius: 16px;
+      padding: 10px;
+      background: radial-gradient(circle at top, rgba(15,23,42,0.95), rgba(15,23,42,0.6));
+      border: 1px solid rgba(55,65,81,0.8);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .signal-glow {
+      position: absolute;
+      inset: -40%;
+      background: conic-gradient(from 180deg, rgba(34,197,94,0.03), transparent, rgba(248,113,113,0.04), transparent);
+      opacity: 0;
+      animation: glow 5s infinite;
+      pointer-events: none;
+    }
+
+    @keyframes glow {
+      0% { opacity: 0; transform: rotate(0deg); }
+      40% { opacity: 1; }
+      100% { opacity: 0; transform: rotate(360deg); }
+    }
+
+    .signal-arrow {
+      width: 52px;
+      height: 52px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+      transform: translateY(0);
+      animation: float 2.5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    .arrow-up {
+      background: radial-gradient(circle at top, #22c55e, #15803d);
+      color: #f9fafb;
+    }
+
+    .arrow-down {
+      background: radial-gradient(circle at top, #ef4444, #b91c1c);
+      color: #f9fafb;
+    }
+
+    .signal-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 11px;
+    }
+
+    .signal-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .signal-type {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .signal-type.buy {
+      color: #22c55e;
+    }
+
+    .signal-type.sell {
+      color: #f97373;
+    }
+
+    .signal-timeframe {
+      font-size: 10px;
+      color: #9ca3af;
+    }
+
+    .signal-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .badge {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(55,65,81,0.9);
+      background: rgba(15,23,42,0.9);
+      color: #9ca3af;
+    }
+
+    .indicator-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      margin-top: 4px;
+      color: #9ca3af;
+    }
+
+    .indicator-row span.value {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+
+    .signal-log {
+      margin-top: 8px;
+      max-height: 120px;
+      overflow-y: auto;
+      font-size: 10px;
+      padding-right: 4px;
+    }
+
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px dashed rgba(31,41,55,0.8);
+    }
+
+    .log-item:last-child {
+      border-bottom: none;
+    }
+
+    .log-left {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .log-arrow-up {
+      color: #22c55e;
+    }
+
+    .log-arrow-down {
+      color: #f97373;
+    }
+
+    .log-time {
+      color: #6b7280;
+      font-size: 9px;
+    }
+
+    .footer-note {
+      margin-top: 8px;
+      font-size: 9px;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    .signal-log::-webkit-scrollbar {
+      width: 3px;
+    }
+    .signal-log::-webkit-scrollbar-thumb {
+      background: rgba(55,65,81,0.9);
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="app">
+      <div class="app-header">
+        <div class="title-group">
+          <div class="app-title">
+            <span class="icon"></span>
+            AI Signal
+          </div>
+          <div class="app-subtitle">Create By ForidTradeX</div>
+        </div>
+        <div class="server-status">
+          <div class="server-dot"></div>
+          <span>Server Connected</span>
+        </div>
+      </div>
+
+      <!-- Market section -->
+      <div class="section">
+        <div class="section-title">
+          <span>Market Selection</span>
+          <span class="chip" id="marketLabel">REAL / OTC</span>
+        </div>
+        <div class="field-row">
+          <select id="marketType">
+            <option value="REAL">Real Market</option>
+            <option value="OTC">OTC Market</option>
+          </select>
+          <select id="symbolSelect"></select>
+        </div>
+        <div class="section-title" style="margin-top:4px;">
+          <span>Expiry Time</span>
+          <span class="chip" id="expiryLabel">Select timeframe</span>
+        </div>
+        <div class="tf-buttons">
+          <button class="tf-btn" data-tf="5s">5s</button>
+          <button class="tf-btn" data-tf="10s">10s</button>
+          <button class="tf-btn" data-tf="30s">30s</button>
+          <button class="tf-btn" data-tf="1m">1m</button>
+          <button class="tf-btn" data-tf="2m">2m</button>
+          <button class="tf-btn" data-tf="3m">3m</button>
+        </div>
+        <div class="toggle-row">
+          <span style="font-size:11px;color:#9ca3af;">Auto Signal Bot</span>
+          <div class="toggle-btn" id="botToggle">
+            <div class="toggle-knob"></div>
+            <div class="toggle-labels">
+              <span>OFF</span>
+              <span>ON</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live signal section -->
+      <div class="section">
+        <div class="section-title">
+          <span>Live Signal</span>
+          <span class="chip" id="statusLabel">Idle</span>
+        </div>
+        <div class="signal-card">
+          <div class="signal-glow"></div>
+          <!-- ডিফল্টে ধূসর গোল সার্কেল -->
+          <div class="signal-arrow" id="signalArrow">●</div>
+          <div class="signal-info">
+            <div class="signal-main">
+              <span class="signal-type" id="signalType">WAITING</span>
+              <span class="signal-timeframe" id="signalTf">-</span>
+            </div>
+            <div class="signal-meta">
+              <span class="badge" id="signalSymbol">-</span>
+              <span class="badge" id="signalPrice">Price: -</span>
+              <span class="badge" id="signalStrength">Score: -</span>
+            </div>
+            <div class="indicator-row">
+              <span>RSI: <span class="value" id="rsiValue">-</span></span>
+              <span>EMA Fast: <span class="value" id="emaFastValue">-</span></span>
+              <span>EMA Slow: <span class="value" id="emaSlowValue">-</span></span>
+            </div>
+            <div class="indicator-row">
+              <span>Trend: <span class="value" id="trendValue">-</span></span>
+              <span>Volume: <span class="value" id="volValue">-</span></span>
+              <span>Pattern: <span class="value" id="patternValue">-</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="signal-log" id="signalLog"></div>
+        <div class="footer-note">
+          ForidTradeX • Use your own risk management
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============ CONFIG ============
+
+    const REAL_MARKETS = [
+      "AUD_CHF","AUD_JPY","AUD_USD","CAD_JPY","EUR_AUD","EUR_CAD","EUR_CHF",
+      "EUR_GBP","EUR_JPY","EUR_NZD","EUR_USD","USD_MXN","GBP_AUD","GBP_CAD",
+      "GBP_CHF","GBP_JPY","GBP_NZD","GBP_USD","NZD_CHF","NZD_CAD","NZD_JPY",
+      "NZD_USD","USD_CAD","USD_CHF","USD_JPY"
+    ];
+
+    const OTC_MARKETS = [
+      "AUD_CHF_OTC","AUD_JPY_OTC","AUD_USD_OTC","CAD_JPY_OTC","EUR_AUD_OTC",
+      "EUR_CAD_OTC","EUR_CHF_OTC","EUR_GBP_OTC","EUR_JPY_OTC","EUR_NZD_OTC",
+      "EUR_USD_OTC","USD_MXN_OTC","GBP_AUD_OTC","GBP_CAD_OTC","GBP_CHF_OTC",
+      "GBP_JPY_OTC","GBP_NZD_OTC","GBP_USD_OTC","NZD_CHF_OTC","NZD_CAD_OTC",
+      "NZD_JPY_OTC","NZD_USD_OTC","USD_CAD_OTC","USD_CHF_OTC","USD_JPY_OTC",
+      "USD_INR_OTC","USD_DKK_OTC","USD_NOK_OTC","USD_TRY_OTC","GOLD_OTC",
+      "SILVER_OTC","BITCOIN_OTC"
+    ];
+
+    const EMA_FAST_PERIOD = 9;
+    const EMA_SLOW_PERIOD = 21;
+    const RSI_PERIOD = 14;
+    const VOL_PERIOD = 20;
+
+    let currentMarketType = "REAL";
+    let currentSymbol = REAL_MARKETS[0];
+    let currentTf = "1m";
+    let botOn = false;
+    let signalTimer = null;
+
+    let candles = [];
+
+    const marketTypeEl = document.getElementById("marketType");
+    const symbolSelectEl = document.getElementById("symbolSelect");
+    const expiryLabelEl = document.getElementById("expiryLabel");
+    const botToggleEl = document.getElementById("botToggle");
+    const statusLabelEl = document.getElementById("statusLabel");
+
+    const signalArrowEl = document.getElementById("signalArrow");
+    const signalTypeEl = document.getElementById("signalType");
+    const signalTfEl = document.getElementById("signalTf");
+    const signalSymbolEl = document.getElementById("signalSymbol");
+    const signalPriceEl = document.getElementById("signalPrice");
+    const signalStrengthEl = document.getElementById("signalStrength");
+
+    const rsiValueEl = document.getElementById("rsiValue");
+    const emaFastValueEl = document.getElementById("emaFastValue");
+    const emaSlowValueEl = document.getElementById("emaSlowValue");
+    const trendValueEl = document.getElementById("trendValue");
+    const volValueEl = document.getElementById("volValue");
+    const patternValueEl = document.getElementById("patternValue");
+
+    const signalLogEl = document.getElementById("signalLog");
+    const tfButtons = Array.from(document.querySelectorAll(".tf-btn"));
+
+    // ============ HELPER: WAITING UI ============
+
+    function showWaitingState() {
+      // ধূসর গোল সার্কেল
+      signalArrowEl.textContent = "●";
+      signalArrowEl.classList.remove("arrow-up", "arrow-down");
+      signalArrowEl.style.background = "rgba(148,163,184,0.18)";
+      signalArrowEl.style.color = "#9ca3af";
+
+      signalTypeEl.textContent = "WAITING";
+      signalTypeEl.classList.remove("buy", "sell");
+      // statusLabel এখানে টাচ করবো না, বাইরে সেট করবো
+    }
+
+    // ============ UI INIT FUNCTIONS ============
+
+    function populateSymbols() {
+      symbolSelectEl.innerHTML = "";
+      const list = currentMarketType === "REAL" ? REAL_MARKETS : OTC_MARKETS;
+      list.forEach(sym => {
+        const opt = document.createElement("option");
+        opt.value = sym;
+        opt.textContent = sym;
+        symbolSelectEl.appendChild(opt);
+      });
+      currentSymbol = list[0];
+      signalSymbolEl.textContent = currentSymbol;
+    }
+
+    function updateTfButtonsByMarketType() {
+      tfButtons.forEach(btn => {
+        const tf = btn.dataset.tf;
+        if (currentMarketType === "REAL" && (tf === "5s" || tf === "10s" || tf === "30s")) {
+          btn.classList.add("disabled");
+        } else {
+          btn.classList.remove("disabled");
+        }
+      });
+    }
+
+    function setCurrentTf(tf) {
+      currentTf = tf;
+      expiryLabelEl.textContent = "TF: " + tf;
+      signalTfEl.textContent = tf;
+      tfButtons.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.tf === tf);
+      });
+    }
+
+    function toggleBot() {
+      botOn = !botOn;
+      botToggleEl.classList.toggle("on", botOn);
+
+      if (botOn) {
+        // Bot ON হলে history clean + waiting UI
+        signalLogEl.innerHTML = "";
+        showWaitingState();
+        statusLabelEl.textContent = "Running";
+        statusLabelEl.style.color = "#22c55e";
+        startBotTimer();
+      } else {
+        statusLabelEl.textContent = "Idle";
+        statusLabelEl.style.color = "#9ca3af";
+        stopBotTimer();
+      }
+    }
+
+    function startBotTimer() {
+      stopBotTimer();
+      // প্রতি ৩০ সেকেন্ডে সিগনাল
+      signalTimer = setInterval(signalNow, 30000);
+    }
+
+    function stopBotTimer() {
+      if (signalTimer) {
+        clearInterval(signalTimer);
+        signalTimer = null;
+      }
+    }
+
+    // ============ INDICATORS ============
+
+    function formatTime(date) {
+      return date.toTimeString().split(" ")[0];
+    }
+
+    function calcEMA(period, values) {
+      if (values.length < period) return null;
+      const k = 2 / (period + 1);
+      let ema = values[0];
+      for (let i = 1; i < values.length; i++) {
+        ema = values[i] * k + ema * (1 - k);
+      }
+      return ema;
+    }
+
+    function calcRSI(period, values) {
+      if (values.length <= period) return null;
+      let gains = 0;
+      let losses = 0;
+      for (let i = values.length - period; i < values.length; i++) {
+        const diff = values[i] - values[i - 1];
+        if (diff > 0) gains += diff;
+        else losses -= diff;
+      }
+      const avgGain = gains / period;
+      const avgLoss = losses / period;
+      if (avgLoss === 0) return 100;
+      const rs = avgGain / avgLoss;
+      return 100 - (100 / (1 + rs));
+    }
+
+    function calcSMA(period, values) {
+      if (values.length < period) return null;
+      const slice = values.slice(values.length - period);
+      const sum = slice.reduce((a, b) => a + b, 0);
+      return sum / period;
+    }
+
+    function detectTrend(emaFast, emaSlow) {
+      if (emaFast == null || emaSlow == null) return "Sideways";
+      if (emaFast > emaSlow * 1.001) return "Uptrend";
+      if (emaFast < emaSlow * 0.999) return "Downtrend";
+      return "Sideways";
+    }
+
+    function detectPriceActionPattern(lastCandle, prevCandle) {
+      if (!lastCandle || !prevCandle) return "None";
+
+      const body = Math.abs(lastCandle.close - lastCandle.open);
+      const upperWick = lastCandle.high - Math.max(lastCandle.close, lastCandle.open);
+      const lowerWick = Math.min(lastCandle.close, lastCandle.open) - lastCandle.low;
+      const prevBody = Math.abs(prevCandle.close - prevCandle.open);
+
+      if (lowerWick > body * 1.5 && lowerWick > upperWick * 1.2) {
+        return "Bull Pin Bar";
+      } else if (upperWick > body * 1.5 && upperWick > lowerWick * 1.2) {
+        return "Bear Pin Bar";
+      }
+
+      if (lastCandle.close > lastCandle.open && prevCandle.close < prevCandle.open && body > prevBody * 0.8) {
+        return "Bull Engulfing";
+      }
+      if (lastCandle.close < lastCandle.open && prevCandle.close > prevCandle.open && body > prevBody * 0.8) {
+        return "Bear Engulfing";
+      }
+
+      return "None";
+    }
+
+    // ============ DEMO PRICE GENERATOR ============
+
+    function generateRandomCandle() {
+      const last = candles.length ? candles[candles.length - 1].close : 1.0000;
+      const vol = Math.random() * 100 + 50;
+      const spread = (Math.random() * 0.0015) + 0.0002;
+      const direction = Math.random() > 0.5 ? 1 : -1;
+
+      const open = last;
+      const close = last + spread * direction * (0.5 + Math.random());
+      const high = Math.max(open, close) + Math.random() * 0.0007;
+      const low = Math.min(open, close) - Math.random() * 0.0007;
+
+      return {
+        time: new Date(),
+        open, high, low, close, volume: vol
+      };
+    }
+
+    function feedCandle() {
+      const c = generateRandomCandle();
+      candles.push(c);
+      if (candles.length > 200) candles.shift();
+      return c;
+    }
+
+    // ============ SIGNAL LOGIC ============
+
+    function signalNow() {
+      const lastCandle = feedCandle();
+      const prevCandle = candles[candles.length - 2] || null;
+
+      const closes = candles.map(c => c.close);
+      const volumes = candles.map(c => c.volume);
+
+      const emaFast = calcEMA(EMA_FAST_PERIOD, closes);
+      const emaSlow = calcEMA(EMA_SLOW_PERIOD, closes);
+      const rsi = calcRSI(RSI_PERIOD, closes);
+      const volAvg = calcSMA(VOL_PERIOD, volumes);
+      const pattern = detectPriceActionPattern(lastCandle, prevCandle);
+
+      const trend = detectTrend(emaFast, emaSlow);
+      const volumeState = volAvg ? (lastCandle.volume > volAvg ? "High" : "Normal") : "Normal";
+
+      let scoreUp = 0;
+      let scoreDown = 0;
+
+      if (trend === "Uptrend") scoreUp += 2;
+      if (trend === "Downtrend") scoreDown += 2;
+
+      if (rsi != null) {
+        if (rsi < 35) scoreUp += 1;
+        if (rsi > 65) scoreDown += 1;
+      }
+
+      if (pattern === "Bull Pin Bar" || pattern === "Bull Engulfing") scoreUp += 2;
+      if (pattern === "Bear Pin Bar" || pattern === "Bear Engulfing") scoreDown += 2;
+
+      if (volumeState === "High") {
+        scoreUp += 0.5;
+        scoreDown += 0.5;
+      }
+
+      let direction = null;
+      let strength = 0;
+
+      if (scoreUp > scoreDown + 1) {
+        direction = "BUY";
+        strength = scoreUp;
+      } else if (scoreDown > scoreUp + 1) {
+        direction = "SELL";
+        strength = scoreDown;
+      } else {
+        direction = "WAIT";
+        strength = Math.max(scoreUp, scoreDown);
+      }
+
+      updateSignalUI({
+        direction,
+        strength,
+        trend,
+        rsi,
+        emaFast,
+        emaSlow,
+        volume: lastCandle.volume,
+        volumeState,
+        pattern,
+        price: lastCandle.close,
+        time: lastCandle.time
+      });
+    }
+
+    // ============ UI UPDATE ============
+
+    function updateSignalUI(sig) {
+      signalSymbolEl.textContent = currentSymbol;
+      signalPriceEl.textContent = "Price: " + sig.price.toFixed(5);
+      signalStrengthEl.textContent = "Score: " + sig.strength.toFixed(1);
+
+      rsiValueEl.textContent = sig.rsi ? sig.rsi.toFixed(1) : "-";
+      emaFastValueEl.textContent = sig.emaFast ? sig.emaFast.toFixed(5) : "-";
+      emaSlowValueEl.textContent = sig.emaSlow ? sig.emaSlow.toFixed(5) : "-";
+      trendValueEl.textContent = sig.trend;
+      volValueEl.textContent = sig.volume.toFixed(1) + " (" + sig.volumeState + ")";
+      patternValueEl.textContent = sig.pattern;
+
+      if (sig.direction === "BUY") {
+        signalArrowEl.textContent = "▲";
+        signalArrowEl.classList.remove("arrow-down");
+        signalArrowEl.classList.add("arrow-up");
+        signalArrowEl.style.background = "";
+        signalArrowEl.style.color = "";
+
+        signalTypeEl.textContent = "CALL";
+        signalTypeEl.classList.remove("sell");
+        signalTypeEl.classList.add("buy");
+
+        statusLabelEl.textContent = "UP Signal";
+        statusLabelEl.style.color = "#22c55e";
+      } else if (sig.direction === "SELL") {
+        signalArrowEl.textContent = "▼";
+        signalArrowEl.classList.remove("arrow-up");
+        signalArrowEl.classList.add("arrow-down");
+        signalArrowEl.style.background = "";
+        signalArrowEl.style.color = "";
+
+        signalTypeEl.textContent = "PUT";
+        signalTypeEl.classList.remove("buy");
+        signalTypeEl.classList.add("sell");
+
+        statusLabelEl.textContent = "DOWN Signal";
+        statusLabelEl.style.color = "#f97373";
+      } else {
+        // WAITING → ধূসর গোল সার্কেল
+        showWaitingState();
+        statusLabelEl.textContent = "No clear signal";
+        statusLabelEl.style.color = "#9ca3af";
+      }
+
+      addLogItem(sig);
+    }
+
+    function addLogItem(sig) {
+      const row = document.createElement("div");
+      row.className = "log-item";
+
+      const left = document.createElement("div");
+      left.className = "log-left";
+
+      const arrow = document.createElement("span");
+      if (sig.direction === "BUY") {
+        arrow.textContent = "▲";
+        arrow.className = "log-arrow-up";
+      } else if (sig.direction === "SELL") {
+        arrow.textContent = "▼";
+        arrow.className = "log-arrow-down";
+      } else {
+        arrow.textContent = "●";
+        arrow.style.color = "#9ca3af";
+      }
+
+      const text = document.createElement("span");
+      text.textContent =
+        (sig.direction === "WAIT" ? "NO TRADE" : sig.direction) +
+        " | " + currentSymbol +
+        " | " + (currentTf || "-");
+
+      left.appendChild(arrow);
+      left.appendChild(text);
+
+      const time = document.createElement("span");
+      time.className = "log-time";
+      time.textContent = formatTime(sig.time);
+
+      row.appendChild(left);
+      row.appendChild(time);
+
+      signalLogEl.prepend(row);
+
+      // শুধু শেষ ৫টা হিস্টরি রাখবে
+      while (signalLogEl.children.length > 5) {
+        signalLogEl.removeChild(signalLogEl.lastChild);
+      }
+    }
+
+    // ============ EVENT LISTENERS ============
+
+    marketTypeEl.addEventListener("change", () => {
+      currentMarketType = marketTypeEl.value;
+      populateSymbols();
+      updateTfButtonsByMarketType();
+    });
+
+    symbolSelectEl.addEventListener("change", () => {
+      currentSymbol = symbolSelectEl.value;
+      signalSymbolEl.textContent = currentSymbol;
+    });
+
+    tfButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (btn.classList.contains("disabled")) return;
+        setCurrentTf(btn.dataset.tf);
+      });
+    });
+
+    botToggleEl.addEventListener("click", () => {
+      toggleBot();
+    });
+
+    // ============ INIT ============
+
+    function init() {
+      populateSymbols();
+      updateTfButtonsByMarketType();
+      setCurrentTf("1m");
+      showWaitingState();
+      statusLabelEl.textContent = "Idle";
+      statusLabelEl.style.color = "#9ca3af";
+    }
+
+    init();
+  </script>
+</body>
+</html>
