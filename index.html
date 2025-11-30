@@ -636,8 +636,8 @@
 
     function startBotTimer() {
       stopBotTimer();
-      // প্রতি ৩০ সেকেন্ডে সিগনাল
-      signalTimer = setInterval(signalNow, 30000);
+      // প্রতি ১ মিনিটে সিগনাল
+      signalTimer = setInterval(signalNow, 60000); // 60000ms = 1 minute
     }
 
     function stopBotTimer() {
